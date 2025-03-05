@@ -6,38 +6,34 @@
 #include <mutex>
 #include <Windows.h>
 #include <future>
+#include "ConcurrentStack.h"
 
-int32 buffer[10000][10000];
+LockFreeStack<int32> s;
+
+void Push() {
+	while (true) {
+		int32 value = rand() % 100;
+		s.Push(value);
+
+		this_thread::sleep_for(10ms);
+	}
+}
+
+void Pop() {
+	while (true) {
+		auto data = s.TryPop();
+		if (data != nullptr)
+			cout << (*data) << endl;
+	}
+}
 
 int main()
 {
-	memset(buffer, 0, sizeof(buffer));
+	thread t1(Push);
+	thread t2(Pop);
+	thread t3(Pop);
 
-	{
-		uint64 start = GetTickCount64();
-
-		int64 sum = 0;
-		for (int i = 0; i < 10000; i++)
-			for (int j = 0; j < 10000; j++)
-				sum += buffer[i][j];
-
-		uint64 end = GetTickCount64();
-
-		cout << "elapsed tick " << (end - start) << endl;
-	}
-
-
-
-	{
-		uint64 start = GetTickCount64();
-
-		int64 sum = 0;
-		for (int i = 0; i < 10000; i++)
-			for (int j = 0; j < 10000; j++)
-				sum += buffer[j][i];
-
-		uint64 end = GetTickCount64();
-
-		cout << "elapsed tick " << (end - start) << endl;
-	}
+	t1.join();
+	t2.join();
+	t3.join();
 }
